@@ -49,13 +49,13 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
     d_inData = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float2) * N * batch, NULL, &status);
     checkError(status, "Failed to allocate input device buffer\n");
 
-    d_inData_2 = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float2) * N * batch, NULL, &status);
+    d_inData_2 = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_CHANNEL_3_INTELFPGA, sizeof(float2) * N * batch, NULL, &status);
     checkError(status, "Failed to allocate input device2 buffer\n");
 
     d_outData = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_CHANNEL_2_INTELFPGA, sizeof(float2) * N * batch, NULL, &status);
     checkError(status, "Failed to allocate output device buffer\n");
 
-    d_outData_2 = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_CHANNEL_2_INTELFPGA, sizeof(float2) * N * batch, NULL, &status);
+    d_outData_2 = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_CHANNEL_4_INTELFPGA, sizeof(float2) * N * batch, NULL, &status);
     checkError(status, "Failed to allocate output device2 buffer\n");
 
     //printf("-- Copying data from host to device\n");
