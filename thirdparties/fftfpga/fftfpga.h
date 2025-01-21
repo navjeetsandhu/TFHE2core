@@ -18,6 +18,13 @@ typedef struct {
   float y; /**< imaginary value */
 } float2;
 
+/**
+ * Double Precision Complex Floating Point Data Structure
+ */
+typedef struct {
+    double x; /**< real value */
+    double y; /**< imaginary value */
+} double2;
 
 /**
  * Record time in milliseconds of different FPGA runtime stages
