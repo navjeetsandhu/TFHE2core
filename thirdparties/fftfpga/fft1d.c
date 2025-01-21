@@ -43,7 +43,7 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
   queue_setup();
 
 
-  printf("Launching%s FFT transform for %d half_batch \n", inv ? " inverse":"", half_batch);
+  if (batch > 1) printf("Launching%s FFT transform for %d half_batch \n", inv ? " inverse":"", half_batch);
 
   // Create device buffers - assign the buffers in different banks for more efficient memory access 
   d_inData = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float2) * N * half_batch, NULL, &status);
@@ -51,6 +51,8 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
 
   d_outData = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_CHANNEL_2_INTELFPGA, sizeof(float2) * N * half_batch, NULL, &status);
   checkError(status, "Failed to allocate output device buffer\n");
+
+  if (batch > 1) printf(" 1 ");
 
   if(batch > 1) {
       d_inData_2 = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_CHANNEL_3_INTELFPGA, sizeof(float2) * N * half_batch, NULL, &status);
@@ -60,34 +62,49 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
       checkError(status, "Failed to allocate output device 2 buffer\n");
   }
 
+  if (batch > 1) printf(" 2 ");
+
   //printf("-- Copying data from host to device\n");
   // Copy data from host to device
 
   status = clEnqueueWriteBuffer(queue1, d_inData, CL_TRUE, 0, sizeof(float2) * N * half_batch, inp, 0, NULL, NULL);
   checkError(status, "Failed to copy data to device on queue1");
 
+  if (batch > 1) printf(" 3 ");
+
   if(batch > 1) {
       status = clEnqueueWriteBuffer(queue3, d_inData_2, CL_TRUE, 0, sizeof(float2) * N * half_batch, &(inp[half_batch * N]), 0, NULL, NULL);
       checkError(status, "Failed to copy data to device on queue3");
   }
 
+  if (batch > 1) printf(" 4 ");
+
   status = clFinish(queue1);
   checkError(status, "failed to finish writing buffer using PCIe on queue1");
+
+  if (batch > 1) printf(" 5 ");
 
   if(batch > 1) {
       status = clFinish(queue3);
        checkError(status, "failed to finish writing buffer using PCIe on queue3");
   }
 
+  if (batch > 1) printf(" 6 ");
+
   // Can't pass bool to device, so convert it to int
   int inverse_int = (int)inv;
+
 
   // Create Kernels - names must match the kernel name in the original CL file
   kernel1 = clCreateKernel(program, "fetch", &status);
   checkError(status, "Failed to create fetch kernel1");
 
+  if (batch > 1) printf(" 7 ");
+
   kernel2 = clCreateKernel(program, "fft1d", &status);
   checkError(status, "Failed to create fft1d kernel2");
+
+  if (batch > 1) printf(" 8 ");
 
   if(batch > 1) {
       kernel3 = clCreateKernel(program, "fetch_1", &status);
@@ -96,6 +113,8 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
       kernel4 = clCreateKernel(program, "fft1d_1", &status);
       checkError(status, "Failed to create fft1d_1 kernel4");
   }
+
+  if (batch > 1) printf(" 9 ");
 
   // Set the kernel arguments
   status = clSetKernelArg(kernel1, 0, sizeof(cl_mem), (void *)&d_inData);
@@ -106,6 +125,8 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
   checkError(status, "Failed to set kernel2 arg 1");
   status = clSetKernelArg(kernel2, 2, sizeof(cl_int), (void*)&inverse_int);
   checkError(status, "Failed to set kernel2 arg 2");
+
+  if (batch > 1) printf(" 10 ");
 
   if(batch > 1) {
       status = clSetKernelArg(kernel3, 0, sizeof(cl_mem), (void *)&d_inData_2);
@@ -118,6 +139,7 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
       checkError(status, "Failed to set kernel4 arg 2");
   }
 
+  if (batch > 1) printf(" 11 ");
 
   size_t ls = N/8;
   size_t gs = half_batch * ls;
