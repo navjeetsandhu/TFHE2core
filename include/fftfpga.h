@@ -18,13 +18,6 @@ typedef struct {
   float y; /**< imaginary value */
 } float2;
 
-/**
- * Double Precision Complex Floating Point Data Structure
- */
-typedef struct {
-  double x; /**< real value */
-  double y; /**< imaginary value */
-} double2;
 
 /**
  * Record time in milliseconds of different FPGA runtime stages
@@ -74,16 +67,6 @@ extern void* fftfpga_complex_malloc(const size_t sz);
  */
 extern void* fftfpgaf_complex_malloc(const size_t sz);
 
-/**
- * @brief  compute an out-of-place double precision complex 1D-FFT on the FPGA
- * @param  N    : integer pointer to size of FFT3d  
- * @param  inp  : double2 pointer to input data of size N
- * @param  out  : double2 pointer to output data of size N
- * @param  inv  : int toggle to activate backward FFT
- * @param  iter : number of iterations of the N point FFT
- * @return fpga_t : time taken in milliseconds for data transfers and execution
- */
-extern fpga_t fftfpga_c2c_1d(const unsigned N, const double2 *inp, double2 *out, const bool inv, const unsigned iter);
 
 /**
  * @brief  compute an out-of-place single precision complex 1D-FFT on the FPGA
@@ -95,7 +78,7 @@ extern fpga_t fftfpga_c2c_1d(const unsigned N, const double2 *inp, double2 *out,
  * @return fpga_t : time taken in milliseconds for data transfers and execution
  */
 extern fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const bool inv, const unsigned iter);
-
+extern fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const bool inv);
 /**
  * @brief  compute an out-of-place single precision complex 1D-FFT on the FPGA
  * @param  N    : integer pointer to size of FFT3d  
