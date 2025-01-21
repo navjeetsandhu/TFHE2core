@@ -3,31 +3,21 @@
 /home/solana/code/TFHEexp2core/build/unit_test/nand
 [solana@localhost nand]$ ./nand_batch
 
+batch: 200
+61 ms
+
+batch: 150
+63 ms
 
 batch: 100
 70 ms
 
-
 batch: 50
-89 ms
-
-batch: 35
-90 ms
-
-batch: 30
 100 ms
 
-batch: 20
+batch: 30
 130 ms
 
-batch: 10
-190 ms
-
-batch: 5
-350 ms
-
 batch: 2
-820 ms
+1561 ms
 
-batch: 1
-1600 ms
