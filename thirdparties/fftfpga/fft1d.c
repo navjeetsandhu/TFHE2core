@@ -24,11 +24,14 @@
  * \param  batch : number of batched executions of 1D FFT
  * \return fpga_t : time taken in milliseconds for data transfers and execution
  */
-fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const bool inv, const unsigned batch){
+fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const bool inv, const unsigned batch2){
 
     fpga_t fft_time = {0.0, 0.0, 0.0, 0};
     cl_kernel kernel1 = NULL, kernel2 = NULL, kernel3 = NULL, kernel4 = NULL;
     cl_int status = 0;
+    const unsigned batch = batch2/2;
+    const float2 *inp_2 =  inp + (N*batch);
+    const float2 *out_2 =  out + (N*batch);
 
     // if N is not a power of 2
     if(inp == NULL || out == NULL || ( (N & (N-1)) !=0)){
@@ -60,7 +63,7 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
     status = clEnqueueWriteBuffer(queue1, d_inData, CL_TRUE, 0, sizeof(float2) * N * batch, inp, 0, NULL, NULL);
     checkError(status, "Failed to copy data to device");
 
-    status = clEnqueueWriteBuffer(queue3, d_inData, CL_TRUE, 0, sizeof(float2) * N * batch, inp, 0, NULL, NULL);
+    status = clEnqueueWriteBuffer(queue3, d_inData_2, CL_TRUE, 0, sizeof(float2) * N * batch, inp_2, 0, NULL, NULL);
     checkError(status, "Failed to copy data to device2");
 
     status = clFinish(queue1);
@@ -147,7 +150,7 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
     status = clEnqueueReadBuffer(queue1, d_outData, CL_TRUE, 0, sizeof(float2) * N * batch, out, 0, NULL, NULL);
     checkError(status, "Failed to copy data from device");
 
-    status = clEnqueueReadBuffer(queue3, d_outData_2, CL_TRUE, 0, sizeof(float2) * N * batch, out, 0, NULL, NULL);
+    status = clEnqueueReadBuffer(queue3, d_outData_2, CL_TRUE, 0, sizeof(float2) * N * batch, out_2, 0, NULL, NULL);
     checkError(status, "Failed to copy data from device2");
 
     status = clFinish(queue1);
