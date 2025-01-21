@@ -31,7 +31,7 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
     cl_int status = 0;
     const unsigned batch = batch2/2;
     const float2 *inp_2 =  inp + (N*batch);
-    const float2 *out_2 =  out + (N*batch);
+    float2 *out_2 =  out + (N*batch);
 
     // if N is not a power of 2
     if(inp == NULL || out == NULL || ( (N & (N-1)) !=0)){
