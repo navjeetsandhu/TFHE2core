@@ -83,7 +83,7 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
     checkError(status, "Failed to create fft1d kernel");
 
     kernel4 = clCreateKernel(program, "fft1d_1", &status);
-    checkError(status, "Failed to create fft1d kernel4")
+    checkError(status, "Failed to create fft1d kernel4");
 
     // Set the kernel arguments
     status = clSetKernelArg(kernel1, 0, sizeof(cl_mem), (void *)&d_inData);
