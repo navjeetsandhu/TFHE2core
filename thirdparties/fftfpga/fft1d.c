@@ -45,9 +45,13 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
 
   if (batch > 1) printf("Launching%s FFT transform for %d half_batch \n", inv ? " inverse":"", half_batch);
 
+  if (batch > 1) printf(" 0 ");
+
   // Create device buffers - assign the buffers in different banks for more efficient memory access 
   d_inData = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float2) * N * half_batch, NULL, &status);
   checkError(status, "Failed to allocate input device buffer\n");
+
+  if (batch > 1) printf(" a ");
 
   d_outData = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_CHANNEL_2_INTELFPGA, sizeof(float2) * N * half_batch, NULL, &status);
   checkError(status, "Failed to allocate output device buffer\n");
