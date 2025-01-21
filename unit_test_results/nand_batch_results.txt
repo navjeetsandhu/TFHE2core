@@ -4,7 +4,7 @@
 [solana@localhost nand]$ ./nand_batch
 
 batch: 200
-61 ms
+60 ms
 
 batch: 150
 63 ms
