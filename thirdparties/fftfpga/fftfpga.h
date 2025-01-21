@@ -79,7 +79,7 @@ extern void* fftfpgaf_complex_malloc(const size_t sz);
  * @return fpga_t : time taken in milliseconds for data transfers and execution
  */
 extern fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const bool inv, const unsigned iter);
-extern fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const bool inv);
+extern fpga_t fftfpgaf_c2c_1d_(const unsigned N, const float2 *inp, float2 *out, const bool inv);
 
 #ifdef __cplusplus
 }

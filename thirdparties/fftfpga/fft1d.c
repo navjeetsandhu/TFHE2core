@@ -125,7 +125,7 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
     return fft_time;
 }
 
-fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const bool inv){
+fpga_t fftfpgaf_c2c_1d_(const unsigned N, const float2 *inp, float2 *out, const bool inv){
 
     const unsigned batch = 1;
     fpga_t fft_time = {0.0, 0.0, 0.0, 0};
