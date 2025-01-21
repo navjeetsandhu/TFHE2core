@@ -42,8 +42,9 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
 
   queue_setup();
 
+  if (batch > 1) printf(" == ");
 
-  if (batch > 1) printf("Launching%s FFT transform for %d half_batch \n", inv ? " inverse":"", half_batch);
+  if (batch > 1) printf("Launching%s FFT transform for %d half batch \n", inv ? " inverse":"", half_batch);
 
   if (batch > 1) printf(" 0 ");
 
