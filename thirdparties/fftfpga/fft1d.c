@@ -43,7 +43,7 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
   queue_setup();
 
 
-  //printf("Launching%s FFT transform for %d batch \n", inv ? " inverse":"", batch);
+  printf("Launching%s FFT transform for %d half_batch \n", inv ? " inverse":"", half_batch);
 
   // Create device buffers - assign the buffers in different banks for more efficient memory access 
   d_inData = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float2) * N * half_batch, NULL, &status);
@@ -56,7 +56,7 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
       d_inData_2 = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_CHANNEL_3_INTELFPGA, sizeof(float2) * N * half_batch, NULL, &status);
       checkError(status, "Failed to allocate input device 2 buffer\n");
 
-      d_outData = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_CHANNEL_4_INTELFPGA, sizeof(float2) * N * half_batch, NULL, &status);
+      d_outData_2 = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_CHANNEL_4_INTELFPGA, sizeof(float2) * N * half_batch, NULL, &status);
       checkError(status, "Failed to allocate output device 2 buffer\n");
   }
 
@@ -64,19 +64,19 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
   // Copy data from host to device
 
   status = clEnqueueWriteBuffer(queue1, d_inData, CL_TRUE, 0, sizeof(float2) * N * half_batch, inp, 0, NULL, NULL);
-  checkError(status, "Failed to copy data to device");
+  checkError(status, "Failed to copy data to device on queue1");
 
   if(batch > 1) {
       status = clEnqueueWriteBuffer(queue3, d_inData_2, CL_TRUE, 0, sizeof(float2) * N * half_batch, &(inp[half_batch * N]), 0, NULL, NULL);
-      checkError(status, "Failed to copy data to device");
+      checkError(status, "Failed to copy data to device on queue3");
   }
 
   status = clFinish(queue1);
-  checkError(status, "failed to finish writing buffer using PCIe");
+  checkError(status, "failed to finish writing buffer using PCIe on queue1");
 
   if(batch > 1) {
       status = clFinish(queue3);
-       checkError(status, "failed to finish writing buffer using PCIe");
+       checkError(status, "failed to finish writing buffer using PCIe on queue3");
   }
 
   // Can't pass bool to device, so convert it to int
@@ -84,17 +84,17 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
 
   // Create Kernels - names must match the kernel name in the original CL file
   kernel1 = clCreateKernel(program, "fetch", &status);
-  checkError(status, "Failed to create fetch kernel");
+  checkError(status, "Failed to create fetch kernel1");
 
   kernel2 = clCreateKernel(program, "fft1d", &status);
-  checkError(status, "Failed to create fft1d kernel");
+  checkError(status, "Failed to create fft1d kernel2");
 
   if(batch > 1) {
       kernel3 = clCreateKernel(program, "fetch_1", &status);
-      checkError(status, "Failed to create fetch_1 kernel");
+      checkError(status, "Failed to create fetch_1 kernel3");
 
       kernel4 = clCreateKernel(program, "fft1d_1", &status);
-      checkError(status, "Failed to create fft1d_1 kernel");
+      checkError(status, "Failed to create fft1d_1 kernel4");
   }
 
   // Set the kernel arguments
@@ -102,7 +102,7 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
   checkError(status, "Failed to set kernel1 arg 0");
   status = clSetKernelArg(kernel2, 0, sizeof(cl_mem), (void *)&d_outData);
   checkError(status, "Failed to set kernel2 arg 0");
-  status = clSetKernelArg(kernel2, 1, sizeof(cl_int), (void*)&batch);
+  status = clSetKernelArg(kernel2, 1, sizeof(cl_int), (void*)&half_batch);
   checkError(status, "Failed to set kernel2 arg 1");
   status = clSetKernelArg(kernel2, 2, sizeof(cl_int), (void*)&inverse_int);
   checkError(status, "Failed to set kernel2 arg 2");
@@ -128,17 +128,17 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
   // Launch the kernel - we launch a single work item hence enqueue a task
   // FFT1d kernel is the SWI kernel
   status = clEnqueueTask(queue1, kernel2, 0, NULL, &endExec_event);
-  checkError(status, "Failed to launch fft1d kernel2");
+  checkError(status, "Failed to enqueue task on queue1 fft1d kernel2");
 
   status = clEnqueueNDRangeKernel(queue2, kernel1, 1, NULL, &gs, &ls, 0, NULL, &startExec_event);
-  checkError(status, "Failed to launch fetch kernel1");
+  checkError(status, "Failed to enqueue on queue2 fetch kernel1");
 
   if(batch > 1) {
       status = clEnqueueTask(queue3, kernel4, 0, NULL, &endExec_event_2);
-      checkError(status, "Failed to launch fft1d kernel4");
+      checkError(status, "Failed to enqueue on queue3 fft1d kernel4");
 
       status = clEnqueueNDRangeKernel(queue4, kernel3, 1, NULL, &gs, &ls, 0, NULL, &startExec_event_2);
-      checkError(status, "Failed to launch fetch kernel3");
+      checkError(status, "Failed to enqueue on fetch queue4 on kernel3");
   }
 
   // Wait for command queue to complete pending events
@@ -163,19 +163,21 @@ fpga_t fftfpgaf_c2c_1d(const unsigned N, const float2 *inp, float2 *out, const b
   // Copy results from device to host
   //printf("-- Transferring results back to host\n");
   status = clEnqueueReadBuffer(queue1, d_outData, CL_TRUE, 0, sizeof(float2) * N * half_batch, out, 0, NULL, NULL);
-  checkError(status, "Failed to copy data from device");
+  checkError(status, "Failed to copy data from device on queue1");
 
   if(batch > 1) {
       status = clEnqueueReadBuffer(queue3, d_outData_2, CL_TRUE, 0, sizeof(float2) * N * half_batch, &(out[N * half_batch]), 0, NULL, NULL);
-      checkError(status, "Failed to copy data from device");
+      checkError(status, "Failed to copy data from device on queue3");
   }
 
   status = clFinish(queue1);
   checkError(status, "failed to finish reading buffer using PCIe from queue1");
 
-   status = clFinish(queue3);
-   checkError(status, "failed to finish reading buffer using PCIe from queue3");
-
+  if(batch > 1) {
+      status = clFinish(queue3);
+      checkError(status,
+                 "failed to finish reading buffer using PCIe from queue3");
+  }
   // Cleanup
   if (d_inData)
   	clReleaseMemObject(d_inData);
